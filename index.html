@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>CodePen - Embed botpress chatbot in a div</title>
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Apartment Complex Maintenence Request Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+ </head>
+<body>
+  <div>
+    <p style="text-align: center;">
+      Apartment Complex Maintenence Request<span></span><span> Chatbot</span>
+    </p>
+    <div class="absolute inset-4 ">
+      <div class="center-div rounded-md border-zinc-200 bg-white p-2 relative h-full w-full overflow-clip border px-0 py-0">
+        <iframe style="border: none;" srcdoc="<body><script src='https://cdn.botpress.cloud/webchat/v0/inject.js'></script>
+            <script>
+              window.botpressWebChat.init({
+                  'composerPlaceholder': 'Talk to me!',
+                  'botConversationDescription': 'Enjoy your time!',
+                  'botName': 'Apartment Complex Maintenence Request Chatbot',
+                  'botId': 'c9fdbd1d-4fec-41d7-be75-54494dbb60b6',
+                  'hostUrl': 'https://cdn.botpress.cloud/webchat/v0',
+                  'messagingUrl': 'https://messaging.botpress.cloud',
+                  'clientId': 'c9fdbd1d-4fec-41d7-be75-54494dbb60b6',
+                  'enableConversationDeletion': true,
+                  'showPoweredBy': true,
+                  'className': 'webchatIframe',
+                  'containerWidth': '100%25',
+                  'layoutWidth': '100%25',
+                  'hideWidget': true,
+                  'showCloseButton': false,
+                  'disableAnimations': true,
+                  'closeOnEscape': false,
+                  'showConversationsButton': false,
+                  'enableTranscriptDownload': false,
+                  'stylesheet':'https://webchat-styler-css.botpress.app/prod/code/3fcd3e4e-d5bc-4bf5-8699-14b621b3ada2/v31782/style.css'
+                  
+              });
+            window.botpressWebChat.onEvent(function () { window.botpressWebChat.sendEvent({ type: 'show' }) }, ['LIFECYCLE.LOADED']);
+            </script></body>" width="100%" height="100%"></iframe>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
