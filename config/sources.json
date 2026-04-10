@@ -1,0 +1,61 @@
+{
+  "sources": [
+    {
+      "name": "sample_seed",
+      "type": "sample",
+      "enabled": true,
+      "modes": ["sample", "hybrid"],
+      "path": "data/sample_listings.json"
+    },
+    {
+      "name": "awa_listing_pages",
+      "type": "listing_pages",
+      "enabled": true,
+      "modes": ["live", "hybrid"],
+      "timeout_seconds": 20,
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (compatible; PlayaRentalAutomationMVP/1.0)"
+      },
+      "entries": [
+        {
+          "source_listing_id": "susi-awa-303b",
+          "url": "https://www.susimacdonald.com/real-estate-listings/awa-playacar-303b-penthouse---playa-del-carmen",
+          "market_type": "long_term",
+          "building": "AWA",
+          "neighborhood": "Playacar, Playa del Carmen",
+          "bedrooms": 3,
+          "bathrooms": 3,
+          "size_m2": 239.97,
+          "furnished": true,
+          "period": "month",
+          "latitude": 20.6275,
+          "longitude": -87.0815
+        },
+        {
+          "source_listing_id": "susi-awa-loft",
+          "url": "https://www.susimacdonald.com/real-estate-listings/loft-awa-playacar",
+          "market_type": "long_term",
+          "building": "AWA",
+          "neighborhood": "Playacar, Playa del Carmen",
+          "bedrooms": 1,
+          "bathrooms": 1,
+          "furnished": true,
+          "period": "month",
+          "latitude": 20.6275,
+          "longitude": -87.0815
+        }
+      ]
+    },
+    {
+      "name": "live_http_placeholder",
+      "type": "http_json",
+      "enabled": false,
+      "modes": ["live", "hybrid"],
+      "url": "https://example.com/listings.json",
+      "timeout_seconds": 20,
+      "headers": {
+        "User-Agent": "PlayaRentalAutomationMVP/1.0"
+      }
+    }
+  ]
+}
