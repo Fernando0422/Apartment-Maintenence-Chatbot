@@ -11,6 +11,11 @@ from .report import render_daily_report
 def run_pipeline(mode: str = "sample") -> Path:
     init_db()
     payloads, source_results = load_payloads(mode=mode)
+    if not source_results:
+        raise RuntimeError(
+            f"No enabled sources configured for mode='{mode}'. "
+            "Enable at least one source in config/sources.json."
+        )
     if not payloads:
         errors = [f"{r.source_name}: {r.error}" for r in source_results if not r.success]
         raise RuntimeError(
