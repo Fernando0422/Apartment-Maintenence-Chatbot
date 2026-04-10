@@ -1,0 +1,22 @@
+{
+  "sources": [
+    {
+      "name": "sample_seed",
+      "type": "sample",
+      "enabled": true,
+      "modes": ["sample", "hybrid"],
+      "path": "data/sample_listings.json"
+    },
+    {
+      "name": "live_http_placeholder",
+      "type": "http_json",
+      "enabled": false,
+      "modes": ["live", "hybrid"],
+      "url": "https://example.com/listings.json",
+      "timeout_seconds": 20,
+      "headers": {
+        "User-Agent": "PlayaRentalAutomationMVP/1.0"
+      }
+    }
+  ]
+}

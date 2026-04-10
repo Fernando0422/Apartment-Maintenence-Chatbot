@@ -1,20 +1,13 @@
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
+from .connectors.registry import SourceRunResult, fetch_from_sources
 from .db import get_connection
 
 
-ROOT = Path(__file__).resolve().parents[2]
-SAMPLE_DATA_PATH = ROOT / "data" / "sample_listings.json"
-
-
-def load_sample_payloads() -> list[dict[str, Any]]:
-    payloads = json.loads(SAMPLE_DATA_PATH.read_text(encoding="utf-8"))
-    if not isinstance(payloads, list):
-        raise ValueError("Sample listings must be a JSON list")
-    return payloads
+def load_payloads(mode: str = "sample") -> tuple[list[dict[str, Any]], list[SourceRunResult]]:
+    return fetch_from_sources(mode=mode)
 
 
 def save_raw_listings(payloads: list[dict[str, Any]]) -> list[int]:

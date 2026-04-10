@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 from pathlib import Path
 import sys
 
@@ -11,9 +12,21 @@ if str(SRC) not in sys.path:
 from automation.pipeline import run_pipeline  # noqa: E402
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run Playa rental market automation pipeline")
+    parser.add_argument(
+        "--mode",
+        choices=["sample", "live", "hybrid"],
+        default="sample",
+        help="Data source mode to run",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
-    report_path = run_pipeline()
-    print(f"Pipeline completed. Report generated: {report_path}")
+    args = _parse_args()
+    report_path = run_pipeline(mode=args.mode)
+    print(f"Pipeline completed in mode={args.mode}. Report generated: {report_path}")
     return 0
 
 

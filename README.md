@@ -36,11 +36,76 @@ You should see output like:
 Pipeline completed. Report generated: /workspace/data/reports/market_report_YYYYMMDD.md
 ```
 
+Run with explicit mode:
+
+```bash
+python3 scripts/run_pipeline.py --mode sample
+python3 scripts/run_pipeline.py --mode live
+python3 scripts/run_pipeline.py --mode hybrid
+```
+
+Modes:
+- `sample`: uses only local sample seed sources
+- `live`: uses only live-enabled connectors from `config/sources.json`
+- `hybrid`: combines both
+
+## Live connector configuration
+
+Edit `config/sources.json`:
+
+- enable or disable each source (`"enabled": true/false`)
+- choose source type (`sample`, `http_json`)
+- map which modes can run it (`"modes": ["live"]`, etc.)
+
+Example live source:
+
+```json
+{
+  "name": "my_live_feed",
+  "type": "http_json",
+  "enabled": true,
+  "modes": ["live", "hybrid"],
+  "url": "https://my-feed.example.com/listings.json",
+  "timeout_seconds": 20,
+  "headers": {
+    "User-Agent": "PlayaRentalAutomationMVP/1.0"
+  }
+}
+```
+
+Expected response format:
+- JSON array of listing objects, or
+- JSON object containing `listings: []`
+
+Each listing must include at minimum:
+- `source_listing_id`
+- `price`
+- `currency` (`USD` or `MXN`)
+- `period` (`night`, `week`, or `month`)
+- `market_type` (`long_term` or `short_term`)
+
 ## Notes
 
 - This MVP intentionally uses local sample data for deterministic behavior.
 - To move to production:
-  - replace sample data adapter with source-specific connectors
+  - keep adding source-specific connectors under `src/automation/connectors/`
   - replace SQLite with Postgres
   - schedule the runner 1-2 times per day
-  - add alerting and data quality checks
+  - route ops alerts to email/Slack/WhatsApp
+
+## Scheduler setup
+
+Scheduler-friendly wrapper:
+
+```bash
+./scripts/run_scheduled.sh hybrid
+```
+
+Cron example (UTC 08:00 and 20:00):
+
+```cron
+0 8,20 * * * cd /workspace && /workspace/scripts/run_scheduled.sh hybrid
+```
+
+Operational logs are written alongside reports:
+- `data/reports/*.ops.log`
