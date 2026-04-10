@@ -7,6 +7,7 @@ from typing import Any
 
 from .base import ListingSourceConnector, SourceSpec
 from .http_json_source import HttpJsonConnector
+from .listing_pages_source import ListingPagesConnector
 from .sample_source import SampleFileConnector
 
 
@@ -57,6 +58,8 @@ def _build_connector(spec: SourceSpec) -> ListingSourceConnector:
         return SampleFileConnector(spec)
     if spec.source_type == "http_json":
         return HttpJsonConnector(spec)
+    if spec.source_type == "listing_pages":
+        return ListingPagesConnector(spec)
     raise ValueError(f"Unsupported source type: {spec.source_type}")
 
 

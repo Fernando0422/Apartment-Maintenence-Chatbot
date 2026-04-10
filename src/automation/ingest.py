@@ -10,8 +10,8 @@ def load_payloads(mode: str = "sample") -> tuple[list[dict[str, Any]], list[Sour
     return fetch_from_sources(mode=mode)
 
 
-def save_raw_listings(payloads: list[dict[str, Any]]) -> list[int]:
-    scraped_at = datetime.now(timezone.utc).isoformat()
+def save_raw_listings(payloads: list[dict[str, Any]]) -> tuple[list[int], str]:
+    run_id = datetime.now(timezone.utc).isoformat()
     inserted_ids: list[int] = []
     with get_connection() as conn:
         for payload in payloads:
@@ -25,8 +25,8 @@ def save_raw_listings(payloads: list[dict[str, Any]]) -> list[int]:
                     payload["source_listing_id"],
                     payload.get("url", ""),
                     json.dumps(payload, sort_keys=True),
-                    scraped_at,
+                    run_id,
                 ),
             )
             inserted_ids.append(int(cursor.lastrowid))
-    return inserted_ids
+    return inserted_ids, run_id

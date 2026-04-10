@@ -13,18 +13,35 @@ from .db import get_connection
 from .models import CleanListing, Recommendation, ScoredComp
 
 
-def _fetch_candidate_comps() -> list[CleanListing]:
+def _fetch_candidate_comps(scraped_at: str | None = None) -> list[CleanListing]:
     with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT
-                raw_id, source, source_listing_id, market_type, building, neighborhood,
-                latitude, longitude, bedrooms, bathrooms, size_m2, furnished,
-                price_usd_month, first_seen_date, last_seen_date, quality_score, is_duplicate
-            FROM clean_listings
-            WHERE market_type = 'long_term' AND is_duplicate = 0
-            """
-        ).fetchall()
+        if scraped_at:
+            rows = conn.execute(
+                """
+                SELECT
+                    c.raw_id, c.source, c.source_listing_id, c.market_type, c.building, c.neighborhood,
+                    c.latitude, c.longitude, c.bedrooms, c.bathrooms, c.size_m2, c.furnished,
+                    c.price_usd_month, c.first_seen_date, c.last_seen_date, c.quality_score, c.is_duplicate
+                FROM clean_listings c
+                JOIN raw_listings r ON r.id = c.raw_id
+                WHERE
+                    c.market_type = 'long_term'
+                    AND c.is_duplicate = 0
+                    AND r.scraped_at = ?
+                """,
+                (scraped_at,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT
+                    raw_id, source, source_listing_id, market_type, building, neighborhood,
+                    latitude, longitude, bedrooms, bathrooms, size_m2, furnished,
+                    price_usd_month, first_seen_date, last_seen_date, quality_score, is_duplicate
+                FROM clean_listings
+                WHERE market_type = 'long_term' AND is_duplicate = 0
+                """
+            ).fetchall()
     comps: list[CleanListing] = []
     for row in rows:
         comps.append(
@@ -129,8 +146,11 @@ def _confidence(scored: list[ScoredComp]) -> float:
     return round((avg_score * 0.7) + (comp_depth * 0.3), 3)
 
 
-def generate_recommendation(subject: SubjectProperty = SUBJECT_PROPERTY) -> tuple[Recommendation, list[ScoredComp]]:
-    comps = _fetch_candidate_comps()
+def generate_recommendation(
+    subject: SubjectProperty = SUBJECT_PROPERTY,
+    scraped_at: str | None = None,
+) -> tuple[Recommendation, list[ScoredComp]]:
+    comps = _fetch_candidate_comps(scraped_at=scraped_at)
     scored = [_score_comp(comp, subject) for comp in comps]
     filtered = [x for x in scored if x.score >= MIN_COMP_SCORE]
     filtered.sort(key=lambda x: x.score, reverse=True)

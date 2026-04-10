@@ -41,19 +41,30 @@ def _is_probable_duplicate(payload: dict[str, Any]) -> bool:
     return not title or not building
 
 
-def normalize_and_save_clean_listings() -> list[CleanListing]:
+def normalize_and_save_clean_listings(scraped_at: str | None = None) -> list[CleanListing]:
     clean_listings: list[CleanListing] = []
     with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT r.id, r.source, r.source_listing_id, r.payload_json
-            FROM raw_listings r
-            LEFT JOIN clean_listings c
-              ON c.source = r.source AND c.source_listing_id = r.source_listing_id
-            WHERE c.id IS NULL
-            ORDER BY r.id ASC
-            """
-        ).fetchall()
+        if scraped_at:
+            rows = conn.execute(
+                """
+                SELECT r.id, r.source, r.source_listing_id, r.payload_json
+                FROM raw_listings r
+                WHERE r.scraped_at = ?
+                ORDER BY r.id ASC
+                """,
+                (scraped_at,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT r.id, r.source, r.source_listing_id, r.payload_json
+                FROM raw_listings r
+                LEFT JOIN clean_listings c
+                  ON c.source = r.source AND c.source_listing_id = r.source_listing_id
+                WHERE c.id IS NULL
+                ORDER BY r.id ASC
+                """
+            ).fetchall()
         for row in rows:
             payload = json.loads(row["payload_json"])
             market_type = payload.get("market_type", "unknown")

@@ -22,9 +22,9 @@ def run_pipeline(mode: str = "sample") -> Path:
             "No payloads collected from configured sources. "
             + (" | ".join(errors) if errors else "Check source configuration.")
         )
-    save_raw_listings(payloads)
-    normalize_and_save_clean_listings()
-    recommendation, comps = generate_recommendation()
+    _, run_id = save_raw_listings(payloads)
+    normalize_and_save_clean_listings(scraped_at=run_id)
+    recommendation, comps = generate_recommendation(scraped_at=run_id)
     report_path = render_daily_report(recommendation, comps)
 
     ops_log = report_path.with_suffix(".ops.log")

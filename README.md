@@ -54,7 +54,7 @@ Modes:
 Edit `config/sources.json`:
 
 - enable or disable each source (`"enabled": true/false`)
-- choose source type (`sample`, `http_json`)
+- choose source type (`sample`, `http_json`, `listing_pages`)
 - map which modes can run it (`"modes": ["live"]`, etc.)
 
 Example live source:
@@ -83,6 +83,26 @@ Each listing must include at minimum:
 - `currency` (`USD` or `MXN`)
 - `period` (`night`, `week`, or `month`)
 - `market_type` (`long_term` or `short_term`)
+
+## Live AWA listing page ingestion (implemented)
+
+There is now a built-in connector type for scraping specific listing pages:
+- connector type: `listing_pages`
+- implementation: `src/automation/connectors/listing_pages_source.py`
+
+Current config includes two live AWA-related listing pages from Susi Macdonald:
+- `awa-playacar-303b-penthouse---playa-del-carmen`
+- `loft-awa-playacar`
+
+Run live mode:
+
+```bash
+python3 scripts/run_pipeline.py --mode live
+```
+
+The connector extracts price/currency and key unit attributes from page text and inserts them into the normal pipeline flow for report generation.
+
+Note: this does not bypass website terms. Always validate source terms before enabling additional connectors.
 
 ## Notes
 
