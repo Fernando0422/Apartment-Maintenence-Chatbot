@@ -83,9 +83,7 @@ def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 def _subject_coordinates(subject: SubjectProperty) -> tuple[float, float]:
-    if subject.building.strip().lower() == "awa":
-        return 20.6368, -87.0748
-    return 20.6368, -87.0748
+    return subject.latitude, subject.longitude
 
 
 def _score_comp(comp: CleanListing, subject: SubjectProperty) -> ScoredComp:

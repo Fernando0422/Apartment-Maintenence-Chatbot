@@ -6,6 +6,8 @@ class SubjectProperty:
     property_id: str
     building: str
     neighborhood: str
+    latitude: float
+    longitude: float
     bedrooms: int
     bathrooms: float
     size_m2: float
@@ -16,7 +18,9 @@ class SubjectProperty:
 SUBJECT_PROPERTY = SubjectProperty(
     property_id="awa-playa-2x2-main",
     building="AWA",
-    neighborhood="Playa del Carmen Centro",
+    neighborhood="Playacar, Playa del Carmen",
+    latitude=20.6275,
+    longitude=-87.0815,
     bedrooms=2,
     bathrooms=2.0,
     size_m2=115.0,
@@ -31,6 +35,6 @@ FX_TO_USD = {
 }
 
 MIN_QUALITY_SCORE = 0.5
-MIN_COMP_SCORE = 0.55
+MIN_COMP_SCORE = 0.45
 MAX_COMPS = 20
 CONFIDENCE_MIN_FOR_RECOMMENDATION = 0.45

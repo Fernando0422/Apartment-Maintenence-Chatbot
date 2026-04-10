@@ -15,44 +15,82 @@ def _clean_text(value: str) -> str:
 
 
 def _extract_currency_and_price(text: str) -> tuple[str, float] | None:
-    # Accepts values like "$95,000 MXN / month" or "USD 6,000 /mes"
+    # Accepts values like "$95,000 MXN / month", "USD 6,000 /mes", "$ 3,200 /mes".
     m = re.search(
-        r"(USD|MXN|\$)\s*([\d,]+(?:\.\d+)?)|([\d,]+(?:\.\d+)?)\s*(USD|MXN)",
+        r"\$\s*([\d,]+(?:\.\d+)?)\s*(USD|MXN)?|"
+        r"(USD|MXN)\s*([\d,]+(?:\.\d+)?)|"
+        r"([\d,]+(?:\.\d+)?)\s*(USD|MXN)",
         text,
         flags=re.IGNORECASE,
     )
     if not m:
         return None
-    if m.group(1):
-        currency_raw = m.group(1).upper()
-        amount_raw = m.group(2)
-    else:
-        amount_raw = m.group(3)
-        currency_raw = m.group(4).upper()
 
-    currency = "USD" if currency_raw in {"USD", "$"} else "MXN"
+    if m.group(1):
+        amount_raw = m.group(1)
+        trailing = (m.group(2) or "").upper()
+        # In MX listing pages, "$" usually means MXN unless explicitly USD.
+        currency = trailing if trailing in {"USD", "MXN"} else "MXN"
+    elif m.group(3):
+        currency = m.group(3).upper()
+        amount_raw = m.group(4)
+    else:
+        amount_raw = m.group(5)
+        currency = m.group(6).upper()
+
     amount = float(amount_raw.replace(",", ""))
     return currency, amount
 
 
 def _extract_beds(text: str) -> int:
-    m = re.search(r"(\d+)\s*(?:rec[aá]maras|bed(?:room)?s?)", text, flags=re.IGNORECASE)
-    return int(m.group(1)) if m else 0
+    candidates: list[int] = []
+    for m in re.finditer(r"\b(\d{1,2})\s+(?:rec[aá]maras|bed(?:room)?s?)\b", text, flags=re.IGNORECASE):
+        candidates.append(int(m.group(1)))
+    for m in re.finditer(r"\b(?:rec[aá]maras|bed(?:room)?s?)\s*[:\-]?\s*(\d{1,2})\b", text, flags=re.IGNORECASE):
+        candidates.append(int(m.group(1)))
+    valid = [x for x in candidates if 0 < x <= 10]
+    return valid[0] if valid else 0
 
 
 def _extract_baths(text: str) -> float:
-    m = re.search(r"(\d+(?:\.\d+)?)\s*(?:ba[ñn]os|bath(?:room)?s?)", text, flags=re.IGNORECASE)
-    return float(m.group(1)) if m else 0.0
+    candidates: list[float] = []
+    for m in re.finditer(r"\b(\d{1,2}(?:\.\d+)?)\s+(?:ba[ñn]os|bath(?:room)?s?)\b", text, flags=re.IGNORECASE):
+        candidates.append(float(m.group(1)))
+    for m in re.finditer(r"\b(?:ba[ñn]os|bath(?:room)?s?)\s*[:\-]?\s*(\d{1,2}(?:\.\d+)?)\b", text, flags=re.IGNORECASE):
+        candidates.append(float(m.group(1)))
+    valid = [x for x in candidates if 0 < x <= 10]
+    return valid[0] if valid else 0.0
 
 
 def _extract_size_m2(text: str) -> float:
-    m = re.search(r"(\d+(?:\.\d+)?)\s*(?:m2|m²)", text, flags=re.IGNORECASE)
-    if m:
-        return float(m.group(1))
-    sqft = re.search(r"(\d{3,5}(?:\.\d+)?)\s*(?:sq\.?\s*ft|sqft)", text, flags=re.IGNORECASE)
-    if sqft:
-        return round(float(sqft.group(1)) * 0.092903, 2)
+    m2_matches = re.finditer(r"\b(\d{2,4}(?:\.\d+)?)\s*(?:m2|m²)\b", text, flags=re.IGNORECASE)
+    m2_vals = [float(m.group(1)) for m in m2_matches]
+    m2_valid = [x for x in m2_vals if 15 <= x <= 1000]
+    if m2_valid:
+        return m2_valid[0]
+    sqft_matches = re.finditer(r"\b(\d{3,5}(?:\.\d+)?)\s*(?:sq\.?\s*ft|sqft)\b", text, flags=re.IGNORECASE)
+    sqft_vals = [float(m.group(1)) for m in sqft_matches]
+    sqft_valid = [x for x in sqft_vals if 200 <= x <= 12000]
+    if sqft_valid:
+        return round(sqft_valid[0] * 0.092903, 2)
     return 0.0
+
+
+def _extract_currency_and_price_from_segment(segment: str) -> tuple[str, float] | None:
+    # Prioritize explicit currency labels near the target section.
+    m = re.search(r"\$?\s*([\d,]+(?:\.\d+)?)\s*(USD|MXN)\b", segment, flags=re.IGNORECASE)
+    if m:
+        amount = float(m.group(1).replace(",", ""))
+        currency = m.group(2).upper()
+        return currency, amount
+    return _extract_currency_and_price(segment)
+
+
+def _extract_section_after(text: str, heading: str, max_chars: int = 2000) -> str:
+    idx = text.lower().find(heading.lower())
+    if idx < 0:
+        return ""
+    return text[idx : idx + max_chars]
 
 
 class ListingPagesConnector(ListingSourceConnector):
@@ -136,23 +174,32 @@ class ListingPagesConnector(ListingSourceConnector):
             if not title:
                 h1 = re.search(r"<h1[^>]*>(.*?)</h1>", html, flags=re.IGNORECASE | re.DOTALL)
                 if h1:
-                    title = _clean_text(h1.group(1))
+                    title = _clean_text(re.sub(r"<[^>]+>", " ", h1.group(1)))
             if not title:
                 t = re.search(r"<title[^>]*>(.*?)</title>", html, flags=re.IGNORECASE | re.DOTALL)
                 if t:
                     title = _clean_text(t.group(1))
 
+            # Focus parsing in the listing details area when present to avoid page-wide noise.
+            detail_segment = (
+                _extract_section_after(doc_text, "Rental Details and Pricing", max_chars=2500)
+                or _extract_section_after(doc_text, "Typologies & Prices", max_chars=2500)
+                or _extract_section_after(doc_text, "Monthly Rental Price", max_chars=1200)
+                or _extract_section_after(doc_text, "Monthly Rent", max_chars=1200)
+                or doc_text[:2500]
+            )
+
             if price is None or currency is None:
-                parsed = _extract_currency_and_price(doc_text)
+                parsed = _extract_currency_and_price_from_segment(detail_segment)
                 if parsed:
                     currency, price = parsed
 
             if bedrooms == 0:
-                bedrooms = _extract_beds(doc_text)
+                bedrooms = _extract_beds(detail_segment) or _extract_beds(doc_text)
             if bathrooms == 0.0:
-                bathrooms = _extract_baths(doc_text)
+                bathrooms = _extract_baths(detail_segment) or _extract_baths(doc_text)
             if size_m2 == 0.0:
-                size_m2 = _extract_size_m2(doc_text)
+                size_m2 = _extract_size_m2(detail_segment) or _extract_size_m2(doc_text)
 
             if price is None or currency is None:
                 continue

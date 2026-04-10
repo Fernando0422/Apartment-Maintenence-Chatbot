@@ -31,6 +31,9 @@ def render_daily_report(recommendation: Recommendation, comps: list[ScoredComp])
     lines.append(
         f"- Unit profile: {SUBJECT_PROPERTY.bedrooms} bed / {SUBJECT_PROPERTY.bathrooms:g} bath / {SUBJECT_PROPERTY.size_m2:g} m2"
     )
+    lines.append(
+        f"- Coordinates: ({SUBJECT_PROPERTY.latitude:.4f}, {SUBJECT_PROPERTY.longitude:.4f})"
+    )
     lines.append(f"- Furnished: {'yes' if SUBJECT_PROPERTY.furnished else 'no'}")
     lines.append(f"- Baseline lease: {_fmt_money(SUBJECT_PROPERTY.baseline_rent_usd_month)} USD/month")
     lines.append("")
